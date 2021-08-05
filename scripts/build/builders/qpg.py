@@ -20,13 +20,14 @@ from .gn import GnBuilder
 
 class QpgBuilder(GnBuilder):
 
-  def __init__(self, root, runner, output_prefix):
+  def __init__(self, root, runner, output_prefix, **kargs):
     super(QpgBuilder, self).__init__(
         root=os.path.join(root, 'examples/lock-app/qpg/'),
         runner=runner,
-        output_prefix=output_prefix)
+        output_prefix=output_prefix,
+        **kargs)
 
-  def outputs(self):
+  def build_outputs(self):
     return {
         'chip-qpg-lock-example.out':
             os.path.join(self.output_dir, 'chip-qpg6100-lock-example.out'),

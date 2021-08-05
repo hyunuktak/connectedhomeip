@@ -39,7 +39,8 @@ class Context:
 
   def SetupBuilders(self, platforms: Sequence[Platform],
                     boards: Sequence[Board],
-                    applications: Sequence[Application]):
+                    applications: Sequence[Application],
+                    **kwargs):
     """Configures internal builders for the given platform/board/app combination.
 
         Handles smart default selection, so that users only need to specify
@@ -74,6 +75,8 @@ class Context:
     boards = set(boards)
     applications = set(applications)
 
+    create_flashbundle = kwargs.get("create_flashbundle", False)
+
     logging.info('Platforms being built: %s', CommaSeparate(platforms))
     logging.info('Boards being built: %s', CommaSeparate(boards))
     logging.info('Applications being built: %s', CommaSeparate(applications))
@@ -86,7 +89,7 @@ class Context:
     for platform in sorted(platforms):
       for board in sorted(boards):
         for application in sorted(applications):
-          builder = self.builder_factory.Create(platform, board, application)
+          builder = self.builder_factory.Create(platform, board, application, create_flashbundle=create_flashbundle)
           if not builder:
             logging.debug('Builder not supported for tuple %s/%s/%s', platform,
                           board, application)

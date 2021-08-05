@@ -45,16 +45,17 @@ def ConcretePlatformName():
 
 class HostBuilder(GnBuilder):
 
-  def __init__(self, root, runner, output_prefix: str, app: HostApp):
+  def __init__(self, root, runner, output_prefix: str, app: HostApp, **kargs):
     super(HostBuilder, self).__init__(
         root=os.path.join(root, 'examples', app.ExamplePath()),
         runner=runner,
-        output_prefix=output_prefix)
+        output_prefix=output_prefix,
+        **kargs)
 
     self.app_name = app.BinaryName()
     self.map_name = self.app_name + '.map'
 
-  def outputs(self):
+  def build_outputs(self):
     return {
         self.app_name: os.path.join(self.output_dir, self.app_name),
         self.map_name : os.path.join(self.output_dir, self.map_name)

@@ -67,8 +67,9 @@ class NrfConnectBuilder(Builder):
                runner,
                output_prefix: str,
                app: NrfApp = NrfApp.LIGHT,
-               board: NrfBoard = NrfBoard.NRF52840):
-    super(NrfConnectBuilder, self).__init__(root, runner, output_prefix)
+               board: NrfBoard = NrfBoard.NRF52840,
+               **kargs):
+    super(NrfConnectBuilder, self).__init__(root, runner, output_prefix, **kargs)
     self.app = app
     self.board = board
 
@@ -109,13 +110,29 @@ west build --cmake-only -d {outdir} -b {board} {sourcedir}
         self._Execute(['bash', '-c', cmd], title='Generating ' + self.identifier)
 
 
-  def build(self):
+  def do_build(self):
     logging.info('Compiling NrfConnect at %s', self.output_dir)
 
     self._Execute(['ninja', '-C', self.output_dir], title='Building ' + self.identifier)
 
-  def outputs(self):
+  def do_generate_flashbundle(self):
+    logging.info(f'Generating flashbundle at {self.output_dir}')
+
+    self._Execute(['ninja', '-C', self.output_dir, 'flashing_script'], title='Generating flashable files of ' + self.identifier)
+
+  def build_outputs(self):
     return {
         '%s.elf' % self.app.AppNamePrefix(): os.path.join(self.output_dir, 'zephyr', 'zephyr.elf'),
         '%s.map' % self.app.AppNamePrefix(): os.path.join(self.output_dir, 'zephyr', 'zephyr.map'),
     }
+
+  def flashbundle(self):
+    '''Nrf build script will generate a file naming <project_name>.flashbundle.txt, go through the output dir to find the file and return it.'''
+    flashbundle = [f for f in os.listdir(self.output_dir) if os.path.isfile(os.path.join(self.output_dir, f)) and f.endswith('.flashbundle.txt')]
+    if not flashbundle:
+      logging.error(f'Cannot find flashbundle file for {self.identifier}!')
+      raise FileNotFoundError()
+    with open(os.path.join(self.output_dir, flashbundle[0]), 'r') as fp:
+      return {
+        l.strip(): os.path.join(self.output_dir, l.strip()) for l in fp.readlines() if l.strip()
+      }

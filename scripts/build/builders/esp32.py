@@ -69,8 +69,9 @@ class Esp32Builder(Builder):
                runner,
                output_prefix: str,
                board: Esp32Board = Esp32Board.M5Stack,
-               app: Esp32App = Esp32App.ALL_CLUSTERS):
-    super(Esp32Builder, self).__init__(root, runner, output_prefix)
+               app: Esp32App = Esp32App.ALL_CLUSTERS,
+               **kargs):
+    super(Esp32Builder, self).__init__(root, runner, output_prefix, **kargs)
     self.board = board
     self.app = app
 
@@ -97,13 +98,13 @@ class Esp32Builder(Builder):
     self._IdfEnvExecute(
         cmd, cwd=self.root, title='Generating ' + self.identifier)
 
-  def build(self):
+  def do_build(self):
     logging.info('Compiling Esp32 at %s', self.output_dir)
 
     self._IdfEnvExecute(
         "ninja -C '%s'" % self.output_dir, title='Building ' + self.identifier)
 
-  def outputs(self):
+  def build_outputs(self):
     return {
         self.app.AppNamePrefix + '.elf':
             os.path.join(self.output_dir, self.app.AppNamePrefix + '.elf'),

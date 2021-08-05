@@ -20,7 +20,7 @@ from .builder import Builder
 
 class GnBuilder(Builder):
 
-  def __init__(self, root, runner, output_prefix):
+  def __init__(self, root, runner, output_prefix, **kargs):
     """Creates  a generic ninja builder.
 
     Args:
@@ -28,7 +28,7 @@ class GnBuilder(Builder):
        runner: what to use to execute shell commands
        output_prefix: where ninja files are to be generated
     """
-    super(GnBuilder, self).__init__(root, runner, output_prefix)
+    super(GnBuilder, self).__init__(root, runner, output_prefix, **kargs)
 
     self.gn_build_args = None
 
@@ -46,6 +46,6 @@ class GnBuilder(Builder):
 
       self._Execute(cmd, title='Generating ' + self.identifier)
 
-  def build(self):
+  def do_build(self):
     self._Execute(['ninja', '-C', self.output_dir],
                   title='Building ' + self.identifier)

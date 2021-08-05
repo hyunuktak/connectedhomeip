@@ -27,10 +27,11 @@ class Builder(ABC):
 
   """
 
-  def __init__(self, root, runner, output_prefix: str ='out'):
+  def __init__(self, root, runner, output_prefix: str = 'out', create_flashbundle: bool = False):
     self.root = os.path.abspath(root)
     self._runner = runner
     self.output_prefix = output_prefix
+    self.create_flashbundle = create_flashbundle
 
     # Set post-init once actual build target is known
     self.identifier = None
@@ -42,18 +43,50 @@ class Builder(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  def build(self):
+  def do_build(self):
     """Perform an actual build"""
     raise NotImplementedError()
 
+  def do_generate_flashbundle(self):
+    """Perform an actual generating of flashbundle
+
+       May do nothing (and builder can choose not to implement this) if the
+       app does not need special steps for generating flashbundle. (e.g. the
+       example apps on Linux platform can run the ELF files directly.)
+    """
+    pass
+
   @abstractmethod
-  def outputs(self):
+  def build_outputs(self):
     """Return a list of relevant output files after a build.
 
        May use build output data (e.g. manifests), so this should be invoked
        only after a build has succeeded.
     """
     raise NotImplementedError()
+
+  def flashbundle(self):
+    """Return the files in flashbundle.
+
+       Return an empty dict (and builder can choose not to implement this) if the
+       app does not need special files as flashbundle. (e.g. the example apps on
+       Linux platform can run the ELF files directly.)
+
+       May use data from do_generate_flashbundle, so this should be invoked only
+       after do_generate_flashbundle has succeeded.
+    """
+    return {}
+
+  def outputs(self):
+    artifacts = self.build_outputs()
+    if self.create_flashbundle:
+      artifacts.update(self.flashbundle())
+    return artifacts
+
+  def build(self):
+    self.do_build()
+    if self.create_flashbundle:
+      self.do_generate_flashbundle()
 
   def _Execute(self, cmdarray, cwd=None, title=None):
     self._runner.Run(cmdarray, cwd=cwd, title=title)
