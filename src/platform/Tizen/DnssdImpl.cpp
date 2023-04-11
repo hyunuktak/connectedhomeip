@@ -406,6 +406,18 @@ exit:
     rCtx->mInstance->RemoveContext(rCtx);
 }
 
+void OnResolveTimeout(gpointer userData)
+{
+    ChipLogDetail(DeviceLayer, "DNSsd %s", __func__);
+
+    auto * rCtx = reinterpret_cast<chip::Dnssd::ResolveContext *>(userData);
+
+    rCtx->mCallback(rCtx->mCbContext, nullptr, chip::Span<chip::Inet::IPAddress>(), CHIP_ERROR_TIMEOUT);
+
+    rCtx->MainLoopQuit();
+    rCtx->mInstance->RemoveContext(rCtx);
+}
+
 gboolean ResolveAsync(GMainLoop * mainLoop, gpointer userData)
 {
     ChipLogDetail(DeviceLayer, "DNSsd %s", __func__);
@@ -688,7 +700,7 @@ CHIP_ERROR DnssdTizen::Resolve(const DnssdService & browseResult, chip::Inet::In
     VerifyOrExit(ret == DNSSD_ERROR_NONE, ChipLogError(DeviceLayer, "dnssd_create_remote_service() failed. ret: %d", ret);
                  err = GetChipError(ret));
 
-    ok = DeviceLayer::Internal::MainLoop::Instance().AsyncRequest(ResolveAsync, resolveCtx);
+    ok = DeviceLayer::Internal::MainLoop::Instance().AsyncRequest(ResolveAsync, resolveCtx, 5, OnResolveTimeout, resolveCtx);
     VerifyOrExit(ok, err = CHIP_ERROR_INTERNAL);
 
 exit:
